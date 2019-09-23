@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 import json
 import uuid as uuid_module
-from utils import confirm_data, input_digit, input_uuid
+from utils import confirm_data, input_digit, input_uuid, is_uuid
 
 
 HOST = 'http://0.0.0.0:8080'
@@ -126,11 +126,9 @@ async def substract_balance(session):
 
 @query_decor(f'{HOST}/api/status', 'get')
 async def check_status(session):
-    name = None
-    uuid = input('Enter user\'s uuid(just press "enter" to enter name): ')
-    if uuid == '':
-        name = input('Enter user\'s name: ')
-        uuid = None
+    uuid, name = input('Enter user\'s uuid or name: '), None
+    if not is_uuid(uuid):
+        name, uuid = uuid, None
     data = {
         'uuid': uuid,
         'name': name

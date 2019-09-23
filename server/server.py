@@ -1,9 +1,7 @@
 import json
 from aiohttp import web
-from asyncpg.exceptions import UndefinedColumnError
-from asyncpg.pool import PoolConnectionProxy
 from sqlalchemy.sql import text
-from uuid import uuid4, UUID
+from utils import get_unique_uuid, check_uuid
 
 
 # стандартный ответ
@@ -258,19 +256,3 @@ class StatusView(web.View):
             'description': {'message': message},
         })
         return web.json_response(answer)
-
-
-async def get_unique_uuid(conn: PoolConnectionProxy) -> UUID:
-    while True:
-        uuid = uuid4()
-        query = text(f'SELECT name FROM accounts WHERE uuid=\'{uuid}\';')
-        result = await conn.fetch(query)
-        if len(result) == 0:
-            return uuid
-
-async def check_uuid(conn: PoolConnectionProxy, uuid) -> bool:
-    query = text(f'SELECT name FROM accounts WHERE uuid=\'{uuid}\';')
-    result = await conn.fetch(query)
-    if len(result) == 0:
-        return False
-    return True

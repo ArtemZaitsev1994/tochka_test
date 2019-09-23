@@ -1,11 +1,8 @@
 import json
 import asyncpgsa
-import unittest
 import pytest
 
-from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 from aiohttp import web
-from aiopg.sa import create_engine
 from sqlalchemy.sql import text
 from routes import routes
 
@@ -77,6 +74,7 @@ def cli(loop, aiohttp_client):
 
 
 async def test_ping_server(cli):
+    # пингуем сервер
     resp = await cli.get('/api/ping')
     assert resp.status == 200
     answer = json.loads(await resp.text())
@@ -84,12 +82,14 @@ async def test_ping_server(cli):
 
 
 async def test_get_all_accounts(cli):
+    # получаем все акккаунты из базы
     resp = await cli.get('/api/accounts')
     assert resp.status == 200
     answer = json.loads(await resp.text())
     assert answer['status'] == 200
 
 async def test_get_all_accounts_from_empty_base(cli):
+    # проверка на ответ из пустой базы
     async with cli.app['db'].acquire() as conn:
         await conn.fetch(text('TRUNCATE accounts;'))
     resp = await cli.get('/api/accounts')
@@ -99,6 +99,7 @@ async def test_get_all_accounts_from_empty_base(cli):
 
 
 async def test_add_money_to_account(cli):
+    # тест на увелечение баланса
     # берем идентификатор из тестовых данных
     uuid = '26c940a1-7228-4ea2-a3bc-e6460b172040'
     # добавляем денег на счет
@@ -108,6 +109,7 @@ async def test_add_money_to_account(cli):
     assert answer['description']['message'] == f'New balance for account {uuid} is 1800.'
 
 async def test_add_money_to_closed_account(cli):
+    # тест на увеличение баланса закрытого аккаунта
     # берем идентификатор закрытого аккаунта из тестовых данных
     uuid = '867f0924-a917-4711-939b-90b179a96392'
     # добавляем денег на счет
@@ -119,6 +121,7 @@ async def test_add_money_to_closed_account(cli):
 
 
 async def test_substract_money(cli):
+    # тест на снятие денег
     # берем идентификатор из тестовых данных
     uuid = '26c940a1-7228-4ea2-a3bc-e6460b172040'
     # вычитаем деньги со счета (hold+substract)
@@ -128,6 +131,7 @@ async def test_substract_money(cli):
     assert answer['description']['message'] == f'New balance for account {uuid} is 1300.'
 
 async def test_substract_money_more_then_it_have(cli):
+    # тест на снятие суммы большой, чем есть на аккаунте
     # берем идентификатор из тестовых данных
     uuid = '26c940a1-7228-4ea2-a3bc-e6460b172040'
     # вычитаем деньги со счета (hold+substract)
@@ -138,6 +142,7 @@ async def test_substract_money_more_then_it_have(cli):
     assert answer['description']['message'] == 'Not enough money to substract. Current balance - 1700.'
 
 async def test_substract_money_from_closed_account(cli):
+    # тест на снятие денег с закрытого аккаунта
     # берем идентификатор закрытого аккаунта из тестовых данных
     uuid = '867f0924-a917-4711-939b-90b179a96392'
     # вычитаем деньги со счета (hold+substract)
@@ -148,6 +153,7 @@ async def test_substract_money_from_closed_account(cli):
 
 
 async def test_create_account(cli):
+    # тест создания аккаунта
     data ={
         'name': 'Ivan Ivanov',
         'balance': 1000,
@@ -160,6 +166,7 @@ async def test_create_account(cli):
     assert answer['status'] == 200
 
 async def test_create_account_with_russian_cyrillic(cli):
+    # тест создания аккаунта с русскими буквами
     data ={
         'name': 'Иван Неиванов',
         'balance': 1000,
@@ -172,6 +179,7 @@ async def test_create_account_with_russian_cyrillic(cli):
     assert answer['status'] == 200
 
 async def test_create_account_with_wrong_balance(cli):
+    # тест создание аккаунта со строковым балансом
     data ={
         'name': 'Иван Неиванов',
         'balance': 'error',
@@ -185,6 +193,7 @@ async def test_create_account_with_wrong_balance(cli):
     assert answer['description']['message'] == f'Wrong format for "balance" column.'
 
 async def test_create_account_with_wrong_hold(cli):
+    # тест создание аккаунта со строковым резервом
     data ={
         'name': 'Иван Неиванов',
         'balance': 100,
@@ -199,6 +208,7 @@ async def test_create_account_with_wrong_hold(cli):
 
 
 async def test_switch_to_closed_status(cli):
+    # тест смены аккаунта в закрытое состояние
     # берем идентификатор из тестовых данных
     uuid = '26c940a1-7228-4ea2-a3bc-e6460b172040'
     resp = await cli.delete('api/status', json={'uuid': uuid})
@@ -207,6 +217,7 @@ async def test_switch_to_closed_status(cli):
     assert answer['description']['message'] == f'{uuid} account\'s status now is "closed".'
 
 async def test_switch_to_closed_status_unexisted_account(cli):
+    # смена несуществующего аккаунта в закрытое состояние
     # берем идентификатор из тестовых данных
     uuid = '26c940a1-7228-4ea2-a3bc-e6460b172048'
     resp = await cli.delete('api/status', json={'uuid': uuid})
@@ -215,6 +226,7 @@ async def test_switch_to_closed_status_unexisted_account(cli):
     assert answer['description']['message'] == f'Account {uuid} doesn\'t exist.'
 
 async def test_switch_to_open_status(cli):
+    # тест смена статуса аккаунта в открытое состояние
     # берем идентификатор из тестовых данных
     uuid = '867f0924-a917-4711-939b-90b179a96392'
     resp = await cli.put('api/status', json={'uuid': uuid})
@@ -223,7 +235,7 @@ async def test_switch_to_open_status(cli):
     assert answer['description']['message'] == f'{uuid} account\'s status now is "open".'
 
 async def test_switch_to_open_status_unexisted_account(cli):
-    # берем идентификатор из тестовых данных
+    # тест смена статуса несущствующего аккаунта
     uuid = '26c940a1-7228-4ea2-a3bc-e6460b172048'
     resp = await cli.put('api/status', json={'uuid': uuid})
     assert resp.status == 200
@@ -232,6 +244,7 @@ async def test_switch_to_open_status_unexisted_account(cli):
 
 
 async def test_get_not_existed_account_by_uuid(cli):
+    # тест получения данных о несуществующем аккаунте
     # взяли несуществующий аккаунт
     uuid = '26c940a1-7228-4ea2-a3bc-e6460b102040'
     resp = await cli.get('api/status', json={'uuid': uuid, 'name': None})
@@ -240,6 +253,7 @@ async def test_get_not_existed_account_by_uuid(cli):
     assert answer['description']['message'] == 'No matches in base.'
 
 async def test_get_account_by_uuid(cli):
+    # тест получения аккаунта по uuid
     # взяли несуществующий аккаунт
     uuid = '867f0924-a917-4711-939b-90b179a96392'
     resp = await cli.get('api/status', json={'uuid': uuid, 'name': None})
@@ -254,8 +268,8 @@ async def test_get_account_by_uuid(cli):
     )
     assert answer['description']['message'] == result
 
-
 async def test_get_accounts_by_name(cli):
+    # тест получения аккаунтов по имени
     # взяли несуществующий аккаунт
     name = 'тр'
     resp = await cli.get('api/status', json={'uuid': None, 'name': name})
