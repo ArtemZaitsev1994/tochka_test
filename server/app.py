@@ -35,12 +35,12 @@ async def close_aiopg(app):
 
 async def substract_hold(app):
     while True:
-        await asyncio.sleep(10)
+        await asyncio.sleep(600)
         async with app['db'].acquire() as conn:
             query = text('''
                 UPDATE accounts 
                 SET balance=balance-hold 
-                WHERE balance>hold and status=true;'''
+                WHERE balance>=hold and status=true;'''
             )
             await conn.fetch(query)
 
