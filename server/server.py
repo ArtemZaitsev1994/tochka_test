@@ -6,11 +6,11 @@ from utils import get_unique_uuid, check_uuid
 
 # стандартный ответ
 ANSWER = {
-        'status': 200,
-        'result': True,
-        'addition': {},
-        'description': {}
-    }
+    'status': 200,
+    'result': True,
+    'addition': {},
+    'description': {}
+}
 
 
 async def ping(request):
@@ -148,7 +148,7 @@ class StatusView(web.View):
             if len(accounts) == 0:
                 message = 'No matches in base.'
                 answer.update({
-                    'description': {'message': message},                    
+                    'description': {'message': message},
                 })
                 return web.json_response(answer)
         addition = {}
@@ -171,7 +171,7 @@ class StatusView(web.View):
                 f'hold - {acc[3]} | '
                 f'status - {status_type}.\n'
             )
-        answer.update({ 
+        answer.update({
             'addition': addition,
             'description': {'message': message},
         })

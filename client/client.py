@@ -15,15 +15,8 @@ def query_decor(link, method):
             data = await func(session)
             if data is None:
                 return
-            if method == 'get':
-                request = session.get
-            elif method == 'post':
-                request = session.post
-            elif method == 'put':
-                request = session.put
-            elif method == 'delete':
-                request = session.delete
-            async with request(link, json=data) as req:
+            print(method)
+            async with session.request(method, link, json=data) as req:
                 if req.status == 200:
                     data = json.loads(await req.text())
                     message = data['description']['message']

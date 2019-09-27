@@ -8,7 +8,7 @@ from routes import routes
 
 
 TEST_DATA = [
-    ['26c940a1-7228-4ea2-a3bc-e6460b172040','Петров Иван Сергеевич', 1700, 300, 'открыт'],
+    ['26c940a1-7228-4ea2-a3bc-e6460b172040', 'Петров Иван Сергеевич', 1700, 300, 'открыт'],
     ['7badc8f8-65bc-449a-8cde-855234ac63e1', 'Kazitsky Jason', 200, 200, 'открыт'],
     ['5597cc3d-c948-48a0-b711-393edf20d9c0', 'Пархоменко Антон Александрович', 10, 300, 'открыт'],
     ['867f0924-a917-4711-939b-90b179a96392', 'Петечкин Петр Измаилович', 1000000, 1, 'закрыт']
@@ -29,7 +29,7 @@ async def check_tables(app):
         query_drop_table = text('DROP TABLE accounts;')
         await conn.fetch(query_drop_table)
         query = text("""
-            CREATE TABLE accounts 
+        CREATE TABLE accounts 
             (
                 uuid UUID PRIMARY KEY,
                 name VARCHAR(32),
@@ -37,23 +37,21 @@ async def check_tables(app):
                 hold INTEGER,
                 status BOOLEAN
 
-            );"""
-        )
+            );""")
         r = await conn.fetch(query)
 
 async def create_accounts(app):
     async with app['db'].acquire() as conn:
         for acc in TEST_DATA:
             uuid, name, balance, hold, status = acc
-            status = True if status == 'открыт' else False
-            query = text(
-                f'INSERT INTO accounts VALUES('
-                f'\'{uuid}\','
-                f'\'{name}\','
-                f'{balance},'
-                f'{hold},'
-                f'{status});'
-            )
+            status = (status == 'открыт')
+            query = text(f"""
+                INSERT INTO accounts VALUES(
+                \'{uuid}\',
+                \'{name}\',
+                {balance},
+                {hold},
+                {status});""")
             await conn.fetch(query)
 
 async def close_aiopg(app):
@@ -154,7 +152,7 @@ async def test_substract_money_from_closed_account(cli):
 
 async def test_create_account(cli):
     # тест создания аккаунта
-    data ={
+    data = {
         'name': 'Ivan Ivanov',
         'balance': 1000,
         'hold': 0,
@@ -167,7 +165,7 @@ async def test_create_account(cli):
 
 async def test_create_account_with_russian_cyrillic(cli):
     # тест создания аккаунта с русскими буквами
-    data ={
+    data = {
         'name': 'Иван Неиванов',
         'balance': 1000,
         'hold': 1,
@@ -180,7 +178,7 @@ async def test_create_account_with_russian_cyrillic(cli):
 
 async def test_create_account_with_wrong_balance(cli):
     # тест создание аккаунта со строковым балансом
-    data ={
+    data = {
         'name': 'Иван Неиванов',
         'balance': 'error',
         'hold': 1,
@@ -194,7 +192,7 @@ async def test_create_account_with_wrong_balance(cli):
 
 async def test_create_account_with_wrong_hold(cli):
     # тест создание аккаунта со строковым резервом
-    data ={
+    data = {
         'name': 'Иван Неиванов',
         'balance': 100,
         'hold': 'error',

@@ -1,5 +1,6 @@
 from uuid import UUID
 
+
 def confirm_data(data: str = '') -> bool:
     # функция подтверждения введенных данных
     flag = ''

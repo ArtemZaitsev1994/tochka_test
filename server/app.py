@@ -1,9 +1,10 @@
 import asyncio
 import json
+import asyncpgsa
+
+from routes import routes
 from aiohttp import web
 from sqlalchemy.sql import text
-from routes import routes
-import asyncpgsa
 
 
 async def create_aiopg(app):
@@ -15,6 +16,7 @@ async def create_aiopg(app):
         password='strongPASS'
     )
 
+
 async def check_tables(app):
     async with app['db'].acquire() as conn:
         query = text("""
@@ -25,13 +27,13 @@ async def check_tables(app):
                 balance INTEGER DEFAULT 0,
                 hold INTEGER,
                 status BOOLEAN
-
-            );
-        """)
+            );""")
         r = await conn.fetch(query)
+
 
 async def close_aiopg(app):
     await app['db'].close()
+
 
 async def substract_hold(app):
     while True:
@@ -40,12 +42,13 @@ async def substract_hold(app):
             query = text('''
                 UPDATE accounts 
                 SET balance=balance-hold 
-                WHERE balance>=hold and status=true;'''
-            )
+                WHERE balance>=hold and status=true;''')
             await conn.fetch(query)
+
 
 async def run_background_task(app):
     app['bg'] = app.loop.create_task(substract_hold(app))
+
 
 async def cleanup_bg(app):
     app['bg'].cancel()
